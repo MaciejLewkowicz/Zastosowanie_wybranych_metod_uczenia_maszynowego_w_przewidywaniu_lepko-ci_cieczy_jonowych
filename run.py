@@ -5,7 +5,10 @@ import os
 from subprocess import run, Popen
 
 SYS_PYTHON = "python"
-ENV_PYTHON = "./.venv/bin/python"
+if sys.platform == "win32":
+    ENV_PYTHON = "./.venv/Scritps/python"
+else:
+    ENV_PYTHON = "./.venv/bin/python"
 
 if not os.path.exists("./.venv"):
     print("INFO: Creating venv")
