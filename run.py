@@ -35,25 +35,3 @@ req.close()
 
 run([ENV_PYTHON, "./main.py"])
 sys.exit(0)
-
-
-# if [[ ! -d .venv ]]; then
-#     if [[ -z $($SYS_PYTHON --version) ]]; then
-# 	echo "ERROR: Please install python from your system repository."
-#     fi
-#
-#     $SYS_PYTHON -m venv .venv
-#     if [[ $? -ne 0 ]]; then
-# 	echo "ERROR: Could not create virtual enviroment"
-#     fi
-#     echo "INFO: Created virtual enviroment"
-#
-#     $ENV_PYTHON -m pip install -r ./requirements.txt
-#     if [[ $? -ne 0 ]]; then
-# 	echo "ERROR: Could not install packages"
-#     fi
-#     echo "INFO: Packages installed into .venv"
-# fi
-#
-# $ENV_PYTHON -m pip install -r ./requirements.txt
-# $ENV_PYTHON main.py
