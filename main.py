@@ -1,6 +1,23 @@
 import pandas as pd
 import ilthermopy as ilt
+import os
 
+def get_ions(data):
+    anions = []
+    cations = []
+    for cmp in data["cmp1_smiles"].iloc:
+        anions.append(cmp.split('.')[0])
+        cations.append(cmp.split('.')[1])
+    return (list(set(anions)), list(set(cations)))
+
+def count_datapoints(data):
+    dp_count = 0
+    for dset in data["raw_data"].iloc:
+        dp_count += dset.shape[0]
+    return dp_count
+
+def count_datasets(data):
+    return data.shape[0]
 
 def main():
     if not os.path.exists("ilthermo.data.csv"):
@@ -34,6 +51,11 @@ def main():
 
     data.update(pd.DataFrame({"id": ids,
                               "raw_data": data_sets}))
+
+    print(f"Anions count: {len(get_ions(data)[0])}")
+    print(f"Cations count: {len(get_ions(data)[1])}")
+    print(f"Dataset count: {count_datasets(data)}")
+    print(f"Datapoint count: {count_datapoints(data)}")
 
     print('finished\a')
     return 0
