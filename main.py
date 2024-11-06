@@ -1,59 +1,93 @@
 import pandas as pd
 import ilthermopy as ilt
 import os
+import io
+import padelpy
 
-def get_ions(data):
-    anions = []
-    cations = []
-    for cmp in data["cmp1_smiles"].iloc:
-        anions.append(cmp.split('.')[0])
-        cations.append(cmp.split('.')[1])
-    return (list(set(anions)), list(set(cations)))
+DATA_DIR = "./data"
 
-def count_datapoints(data):
-    dp_count = 0
-    for dset in data["raw_data"].iloc:
-        dp_count += dset.shape[0]
-    return dp_count
+def get_data():
+    os.path.exists(DATA_DIR) or os.makedirs(DATA_DIR)
 
-def count_datasets(data):
-    return data.shape[0]
+    if not os.path.exists(f"{DATA_DIR}/data.csv"):
+        if not os.path.exists(f"{DATA_DIR}/ilthermo.data.csv"):
+            search = ilt.Search(n_compounds = 1, prop = "Viscosity")
+            search.to_csv(f"{DATA_DIR}/ilthermo.data.csv")
+        else:
+            search = pd.read_csv(f"{DATA_DIR}/ilthermo.data.csv")
 
-def main():
-    if not os.path.exists("ilthermo.data.csv"):
-        search = ilt.Search(n_compounds = 1, prop = "Viscosity")
-        search.to_csv("ilthermo.data.csv")
+
+        data = search[["id", "cmp1", "cmp1_smiles", "reference"]].copy()
+
+        data["raw_data"] = None
+
+        ids = []
+        data_sets = []
+
+        for idx in data.id.iloc:
+            data_entry = None
+
+            if not os.path.exists(f"{DATA_DIR}/{idx}.csv"):
+                entry = ilt.GetEntry(idx)
+                data_entry = entry.data.rename(entry.header, axis="columns")
+                data_entry.to_csv(f"{DATA_DIR}/{idx}.csv")
+            else:
+                data_entry = pd.read_csv(f"{DATA_DIR}/{idx}.csv")
+
+            data_sets.append(data_entry)
+            ids.append(idx)
+
+
+        data.update(pd.DataFrame({"id": ids,
+                                  "raw_data": data_sets}))
+
+        data_to_save = data.copy()
+        data_csvs = []
+
+        for raw in data["raw_data"].iloc:
+            data_csvs.append(raw.to_csv().replace("\n", ";"))
+
+        data_to_save.update(pd.DataFrame({ "raw_data": data_csvs }))
+        data_to_save.to_csv(f"{DATA_DIR}/data.csv")
     else:
-        search = pd.read_csv("ilthermo.data.csv")
+        data = pd.read_csv(f"{DATA_DIR}/data.csv")
+        raw_frames = []
+        for raw in data["raw_data"].iloc:
+            raw_frames.append(pd.read_csv(io.StringIO(raw.replace(";","\n"))))
+        data.update(pd.DataFrame({ "raw_data": raw_frames }))
 
-    os.path.exists("./data") or os.makedirs("./data")
+    return data
 
-    data = search[["id", "cmp1", "cmp1_smiles", "reference"]].copy()
 
     data["raw_data"] = None
 
     ids = []
     data_sets = []
 
-    for idx in data.id.iloc:
-        data_entry = None
+    return d_cations, d_anions
 
-        if not os.path.exists(f"./data/{idx}.csv"):
-            entry = ilt.GetEntry(idx)
-            data_entry = entry.data.rename(entry.header, axis="columns")
-            data_entry.to_csv(f"./data/{idx}.csv")
-        else:
-            data_entry = pd.read_csv(f"./data/{idx}.csv")
+def get_ions(data) -> tuple[list[str], list[str]]:
+    anions = []
+    cations = []
+    for cmp in data["cmp1_smiles"].iloc:
+        anions.append(cmp.split('.')[0])
+        cations.append(cmp.split('.')[1])
+    return (list(set(cations)), list(set(anions)))
 
-        data_sets.append(data_entry)
-        ids.append(idx)
+def count_datapoints(data) -> int:
+    dp_count = 0
+    for dset in data["raw_data"].iloc:
+        dp_count += dset.shape[0]
+    return dp_count
 
+def count_datasets(data) -> int:
+    return data.shape[0]
 
-    data.update(pd.DataFrame({"id": ids,
-                              "raw_data": data_sets}))
+def main() -> int:
+    data = get_data()
 
-    print(f"Anions count: {len(get_ions(data)[0])}")
-    print(f"Cations count: {len(get_ions(data)[1])}")
+    print(f"Anions count: {len(get_ions(data)[1])}")
+    print(f"Cations count: {len(get_ions(data)[0])}")
     print(f"Dataset count: {count_datasets(data)}")
     print(f"Datapoint count: {count_datapoints(data)}")
 
