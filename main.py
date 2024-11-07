@@ -33,44 +33,38 @@ def get_data():
 
         data = search[["id", "cmp1", "cmp1_smiles", "reference"]].copy()
 
-        data["raw_data"] = None
-
-        ids = []
-        data_sets = []
+        data_points = {"id":[],
+                       "Temperature": [],
+                       "Viscosity": [],
+                       "Error of viscosity": []}
 
         print("getting datasets:")
         for i, idx in enumerate(data.id.iloc):
-            data_entry = None
-            print_status(i, data.shape[0], str(idx))
+            data_set = None
+            print_status(i, data.shape[0]-1, str(idx))
 
-            if not os.path.exists(f"{DATA_DIR}/{idx}.csv"):
+            os.path.exists(f"{DATA_DIR}/data_sets") or os.makedirs(f"{DATA_DIR}/data_sets")
+            if not os.path.exists(f"{DATA_DIR}/data_sets/{idx}.csv"):
                 entry = ilt.GetEntry(idx)
-                data_entry = entry.data.rename(entry.header, axis="columns")
-                data_entry.to_csv(f"{DATA_DIR}/{idx}.csv")
+                columns = {x: y.split(',')[0] for x, y in entry.header.items()}
+                data_set = entry.data.rename(columns, axis="columns")
+                data_set.to_csv(f"{DATA_DIR}/data_sets/{idx}.csv")
             else:
-                data_entry = pd.read_csv(f"{DATA_DIR}/{idx}.csv")
+                data_set = pd.read_csv(f"{DATA_DIR}/data_sets/{idx}.csv")
 
-            data_sets.append(data_entry)
-            ids.append(idx)
+            if not "Viscosity" in data_set.columns.values:
+                continue
 
+            data_points["Temperature"] += data_set["Temperature"].values.tolist()
+            data_points["Viscosity"] += data_set["Viscosity"].values.tolist()
+            data_points["Error of viscosity"] += data_set["Error of viscosity"].values.tolist()
+            data_points["id"] += [idx for _ in range(data_set.shape[0])]
 
-        data.update(pd.DataFrame({"id": ids,
-                                  "raw_data": data_sets}))
+        data = data.merge(pd.DataFrame(data_points), on="id", how="left")
 
-        data_to_save = data.copy()
-        data_csvs = []
-
-        for raw in data["raw_data"].iloc:
-            data_csvs.append(raw.to_csv().replace("\n", ";"))
-
-        data_to_save.update(pd.DataFrame({ "raw_data": data_csvs }))
-        data_to_save.to_csv(f"{DATA_DIR}/data.csv")
+        data.to_csv(f"{DATA_DIR}/data.csv")
     else:
         data = pd.read_csv(f"{DATA_DIR}/data.csv")
-        raw_frames = []
-        for raw in data["raw_data"].iloc:
-            raw_frames.append(pd.read_csv(io.StringIO(raw.replace(";","\n"))))
-        data.update(pd.DataFrame({ "raw_data": raw_frames }))
 
     return data
 
@@ -91,7 +85,7 @@ def get_ion_descriptors(ion_codes) -> pd.DataFrame:
                 print(f"failed to compute descriptors for {code}")
                 descriptors = None
             d_list.append((code, descriptors))
-        d_ions = pd.DataFrame(d_list)
+        d_ions = pd.DataFrame({"smiles": d_list[0], "descriptors": d_list[1]})
         d_ions.to_csv(f"{DATA_DIR}/d_ions.csv")
     else:
         d_ions = pd.read_csv(f"{DATA_DIR}/d_ions.csv")
@@ -106,13 +100,10 @@ def get_ions(data) -> tuple[list[str]]:
     return list(set(ions))
 
 def count_datapoints(data) -> int:
-    dp_count = 0
-    for dset in data["raw_data"].iloc:
-        dp_count += dset.shape[0]
-    return dp_count
+    return data.shape[0]
 
 def count_datasets(data) -> int:
-    return data.shape[0]
+    return len(set(data["id"].iloc))
 
 def main() -> int:
     data = get_data()
