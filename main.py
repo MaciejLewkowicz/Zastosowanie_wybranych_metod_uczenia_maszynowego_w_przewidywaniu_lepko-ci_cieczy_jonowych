@@ -6,21 +6,19 @@ import padelpy
 
 DATA_DIR = "./data"
 
+# TODO: Zrobić żeby używało tylko jednej linii
 def print_status(cur, max, msg):
-    print("\r", end="")
-
     progress = int(cur/max*10)
     print("[", end="")
     print("-"*progress, end="")
     print(" "*(10-progress), end="")
     print("]", end="")
-    print(f" {int(cur/max*100)}%", end="")
+    print(f" {int(cur/max*100):3}%", end="")
 
     if not msg is None:
         print(f" {msg}", end="")
 
-    if progress == 10:
-        print()
+    print()
 
 def get_data():
     os.path.exists(DATA_DIR) or os.makedirs(DATA_DIR)
@@ -76,21 +74,36 @@ def get_data():
 
     return data
 
+def get_ion_descriptors(ion_codes) -> pd.DataFrame:
+    d_ions: pd.DataFrame = None
 
-    data["raw_data"] = None
+    if not os.path.exists(f"{DATA_DIR}/d_ions.csv"):
+        print("generating ion descriptors:")
+        d_list = list()
+        for i, code in enumerate(ion_codes):
+            print_status(i, len(ion_codes)-1, code)
+            descriptors = dict()
+            try:
+                descriptors = padelpy.from_smiles(code)
+            except KeyboardInterrupt as e:
+                raise e
+            except:
+                print(f"failed to compute descriptors for {code}")
+                descriptors = None
+            d_list.append((code, descriptors))
+        d_ions = pd.DataFrame(d_list)
+        d_ions.to_csv(f"{DATA_DIR}/d_ions.csv")
+    else:
+        d_ions = pd.read_csv(f"{DATA_DIR}/d_ions.csv")
 
-    ids = []
-    data_sets = []
+    return d_ions
 
-    return d_cations, d_anions
-
-def get_ions(data) -> tuple[list[str], list[str]]:
-    anions = []
-    cations = []
+def get_ions(data) -> tuple[list[str]]:
+    ions = []
     for cmp in data["cmp1_smiles"].iloc:
-        anions.append(cmp.split('.')[0])
-        cations.append(cmp.split('.')[1])
-    return (list(set(cations)), list(set(anions)))
+        ions.append(cmp.split('.')[0])
+        ions.append(cmp.split('.')[1])
+    return list(set(ions))
 
 def count_datapoints(data) -> int:
     dp_count = 0
@@ -104,10 +117,11 @@ def count_datasets(data) -> int:
 def main() -> int:
     data = get_data()
 
-    print(f"Anions count: {len(get_ions(data)[1])}")
-    print(f"Cations count: {len(get_ions(data)[0])}")
+    print(f"Ions count: {len(get_ions(data))}")
     print(f"Dataset count: {count_datasets(data)}")
     print(f"Datapoint count: {count_datapoints(data)}")
+
+    d_ions = get_ion_descriptors(get_ions(data))
 
     print('finished\a')
     return 0
