@@ -3,6 +3,9 @@ import ilthermopy as ilt
 import os
 import io
 import padelpy
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from descriptor_list import descriptor_list
 
 DATA_DIR = "./data"
 
@@ -92,6 +95,28 @@ def get_ion_descriptors(ion_codes) -> pd.DataFrame:
 
     return d_ions
 
+def make_mol_files(ions):
+    os.path.exists(f"{DATA_DIR}/mol_files") or os.makedirs(f"{DATA_DIR}/mol_files")
+    os.path.exists(f"{DATA_DIR}/mol_files/2d") or os.makedirs(f"{DATA_DIR}/mol_files/2d")
+    os.path.exists(f"{DATA_DIR}/mol_files/3d") or os.makedirs(f"{DATA_DIR}/mol_files/3d")
+
+    import base64
+    for ion in ions:
+        file_name = base64.b64encode(bytes(ion, 'utf-8')).decode("utf-8")
+        
+        mol = Chem.MolFromSmiles(ion)
+        mol = AllChem.AddHs(mol)
+        mol.SetProp("_Name", ion)
+
+        if not os.path.exists(f"{DATA_DIR}/mol_files/2d/{file_name}.mol"):
+            Chem.MolToMolFile(mol, f"{DATA_DIR}/mol_files/2d/{file_name}.mol")
+
+        if not os.path.exists(f"{DATA_DIR}/mol_files/3d/{file_name}.mol"):
+            params = AllChem.ETKDGv3()
+            params.randomSeed = 0xf00d
+            AllChem.EmbedMolecule(mol, params)
+            Chem.MolToMolFile(mol, f"{DATA_DIR}/mol_files/3d/{file_name}.mol")
+
 def get_ions(data) -> tuple[list[str]]:
     ions = []
     for cmp in data["cmp1_smiles"].iloc:
@@ -113,6 +138,8 @@ def main() -> int:
     print(f"Datapoint count: {count_datapoints(data)}")
 
     d_ions = get_ion_descriptors(get_ions(data))
+
+    make_mol_files(get_ions(data))
 
     print('finished\a')
     return 0
