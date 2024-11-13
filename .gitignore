@@ -1,4 +1,8 @@
+# python files
+__pycache__/
 .venv/
 .venv/*
+
+# cached data
 **/*.csv
 data/

@@ -941,6 +941,7 @@ dependencies = [
     { name = "padelpy" },
     { name = "pandas" },
     { name = "pycaret" },
+    { name = "rdkit" },
 ]
 
 [package.metadata]
@@ -950,6 +951,7 @@ requires-dist = [
     { name = "padelpy", specifier = ">=0.1.16" },
     { name = "pandas", specifier = ">=2" },
     { name = "pycaret", specifier = "==3.3.2" },
+    { name = "rdkit", specifier = ">=2024.3.6" },
 ]
 
 [[package]]
@@ -1105,6 +1107,22 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a9/a4/aa562d8935e3df5e49c161b427a3a2efad2ed4e9cf81c3de636f1fdddfd0/pywin32-308-cp313-cp313-win32.whl", hash = "sha256:1c44539a37a5b7b21d02ab34e6a4d314e0788f1690d65b48e9b0b89f31abbbed", size = 5938579 },
     { url = "https://files.pythonhosted.org/packages/c7/50/b0efb8bb66210da67a53ab95fd7a98826a97ee21f1d22949863e6d588b22/pywin32-308-cp313-cp313-win_amd64.whl", hash = "sha256:fd380990e792eaf6827fcb7e187b2b4b1cede0585e3d0c9e84201ec27b9905e4", size = 6542056 },
     { url = "https://files.pythonhosted.org/packages/26/df/2b63e3e4f2df0224f8aaf6d131f54fe4e8c96400eb9df563e2aae2e1a1f9/pywin32-308-cp313-cp313-win_arm64.whl", hash = "sha256:ef313c46d4c18dfb82a2431e3051ac8f112ccee1a34f29c263c583c568db63cd", size = 7974986 },
+]
+
+[[package]]
+name = "rdkit"
+version = "2024.3.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "pillow" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/33/81/7d417822c32a103d2f48509727822ddb176afa5be6b2f07db82e9ac98d26/rdkit-2024.3.6-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:72d6545a6c2ef5a11d0805539c24dc9f55c59b095159572879847c4a2bb33717", size = 28891758 },
+    { url = "https://files.pythonhosted.org/packages/6b/45/21635d0aab97dbc6c71ceac810d0fb854371b89f114f7ec576ea1fb0f701/rdkit-2024.3.6-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:8dc9ffb353507f7340b98e9f4d87241de3bedd044e64356b4523c0c6152efe50", size = 26799363 },
+    { url = "https://files.pythonhosted.org/packages/95/c2/f25f9dd7942235e125f07f7620d0f52b31f483028caa54084deafa7791e2/rdkit-2024.3.6-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:1a6dcfe3be226fd8a0e0e11c381ee1fe605bc4a42bf1d41a5c0824dcca7c921b", size = 31861083 },
+    { url = "https://files.pythonhosted.org/packages/7c/6f/cc4abe9646c966b041f2ba0131366b0bed799ba7bebaff571623474ab710/rdkit-2024.3.6-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:8f88bf8ba63c1341be1d7994b61048eb90a3f8e7333de4cfcc187ae848bbbb0f", size = 32720883 },
+    { url = "https://files.pythonhosted.org/packages/e9/62/5a1d763599b09ad956c6d77a6155ddc4c5b6394264e3f3e855479c8566a3/rdkit-2024.3.6-cp312-cp312-win_amd64.whl", hash = "sha256:8c1fea0001422b036369bd43abaa855c7fbf9ae2ed2226c73839a04b5b7d6968", size = 21757273 },
 ]
 
 [[package]]

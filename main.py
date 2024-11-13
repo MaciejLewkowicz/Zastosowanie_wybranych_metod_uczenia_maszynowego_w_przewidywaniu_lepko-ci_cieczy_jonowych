@@ -3,6 +3,8 @@ import ilthermopy as ilt
 import os
 import io
 import padelpy
+from rdkit import Chem
+from rdkit.Chem import AllChem
 from descriptor_list import descriptor_list
 
 DATA_DIR = "./data"
@@ -96,7 +98,6 @@ def get_ion_descriptors(ion_codes) -> pd.DataFrame:
 
     return d_ions
 
-# data is expected to be at temperature
 def prepare_data(data, d_ions, sum_f) -> pd.DataFrame:
     t_data = {x: [] for x in (["Viscosity"] + descriptor_list)}
 
@@ -117,6 +118,28 @@ def prepare_data(data, d_ions, sum_f) -> pd.DataFrame:
                 t_data[desc].append(sum_f(desc1, desc2))
 
     return pd.DataFrame(t_data)
+
+def make_mol_files(ions):
+    os.path.exists(f"{DATA_DIR}/mol_files") or os.makedirs(f"{DATA_DIR}/mol_files")
+    os.path.exists(f"{DATA_DIR}/mol_files/2d") or os.makedirs(f"{DATA_DIR}/mol_files/2d")
+    os.path.exists(f"{DATA_DIR}/mol_files/3d") or os.makedirs(f"{DATA_DIR}/mol_files/3d")
+
+    import base64
+    for ion in ions:
+        file_name = base64.b64encode(bytes(ion, 'utf-8')).decode("utf-8")
+        
+        mol = Chem.MolFromSmiles(ion)
+        mol = AllChem.AddHs(mol)
+        mol.SetProp("_Name", ion)
+
+        if not os.path.exists(f"{DATA_DIR}/mol_files/2d/{file_name}.mol"):
+            Chem.MolToMolFile(mol, f"{DATA_DIR}/mol_files/2d/{file_name}.mol")
+
+        if not os.path.exists(f"{DATA_DIR}/mol_files/3d/{file_name}.mol"):
+            params = AllChem.ETKDGv3()
+            params.randomSeed = 0xf00d
+            AllChem.EmbedMolecule(mol, params)
+            Chem.MolToMolFile(mol, f"{DATA_DIR}/mol_files/3d/{file_name}.mol")
 
 def get_ions(data) -> tuple[list[str]]:
     ions = []
@@ -142,6 +165,8 @@ def main() -> int:
 
     d_ions = get_ion_descriptors(get_ions(data))
     t_data = prepare_data(data_in_temperature, d_ions, lambda x, y: x+y)
+
+    make_mol_files(get_ions(data))
 
     print('finished\a')
     return 0
