@@ -13,7 +13,7 @@ if not os.path.exists("./.venv"):
 
 freeze_proc = run([ENV_PYTHON, "-m", "pip", "freeze"], capture_output = True)
 freeze_output = freeze_proc.stdout.decode()
-req = open("./requirements.txt", "r")
+req = open("./requirements.txt", "r+")
 
 unsync = False
 for line in zip(freeze_output.splitlines(), req.readlines()):
@@ -24,6 +24,11 @@ for line in zip(freeze_output.splitlines(), req.readlines()):
 if unsync:
     print("INFO: Requirements not met. Syncing")
     run([ENV_PYTHON, "-m", "pip", "install", "-r", "requirements.txt"])
+    req.seek(0)
+    req.write(freeze_output)
+    req.truncate()
+
+req.close()
 
 run([ENV_PYTHON, "./main.py"])
 sys.exit(0)
