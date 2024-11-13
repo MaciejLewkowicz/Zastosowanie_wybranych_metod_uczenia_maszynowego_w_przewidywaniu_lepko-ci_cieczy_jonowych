@@ -26,12 +26,16 @@ for line in zip(freeze_output.splitlines(), req.readlines()):
 
 if unsync:
     print("INFO: Requirements not met. Syncing")
-    run([ENV_PYTHON, "-m", "pip", "install", "-r", "requirements.txt"])
+    pip_run = run([ENV_PYTHON, "-m", "pip", "install", "-r", "requirements.txt"],
+        capture_output = True)
+    print(pip_run.stderr.decode())
     req.seek(0)
     req.write(freeze_output)
     req.truncate()
 
 req.close()
 
-run([ENV_PYTHON, "./main.py"])
+prog = run([ENV_PYTHON, "./main.py"], capture_output = True)
+print(prog.stdout.decode())
+print(prog.stderr.decode())
 sys.exit(0)
