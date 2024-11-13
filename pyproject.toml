@@ -10,4 +10,8 @@ dependencies = [
     "padelpy>=0.1.16",
     "pandas>=2",
     "pycaret==3.3.2",
+    "rdkit>=2024.3.6",
 ]
+
+[tool.pylyzer]
+path = "./.venv/bin/python"
