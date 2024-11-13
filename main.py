@@ -6,6 +6,22 @@ import padelpy
 
 DATA_DIR = "./data"
 
+def print_status(cur, max, msg):
+    print("\r", end="")
+
+    progress = int(cur/max*10)
+    print("[", end="")
+    print("-"*progress, end="")
+    print(" "*(10-progress), end="")
+    print("]", end="")
+    print(f" {int(cur/max*100)}%", end="")
+
+    if not msg is None:
+        print(f" {msg}", end="")
+
+    if progress == 10:
+        print()
+
 def get_data():
     os.path.exists(DATA_DIR) or os.makedirs(DATA_DIR)
 
@@ -24,8 +40,10 @@ def get_data():
         ids = []
         data_sets = []
 
-        for idx in data.id.iloc:
+        print("getting datasets:")
+        for i, idx in enumerate(data.id.iloc):
             data_entry = None
+            print_status(i, data.shape[0], str(idx))
 
             if not os.path.exists(f"{DATA_DIR}/{idx}.csv"):
                 entry = ilt.GetEntry(idx)
