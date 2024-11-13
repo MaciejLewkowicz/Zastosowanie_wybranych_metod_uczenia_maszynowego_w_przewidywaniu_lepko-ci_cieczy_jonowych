@@ -11,11 +11,29 @@ def main():
 
     os.path.exists("./data") or os.makedirs("./data")
 
-    for idx in search.id.iloc:
+    data = search[["id", "cmp1", "cmp1_smiles", "reference"]].copy()
+
+    data["raw_data"] = None
+
+    ids = []
+    data_sets = []
+
+    for idx in data.id.iloc:
+        data_entry = None
+
         if not os.path.exists(f"./data/{idx}.csv"):
             entry = ilt.GetEntry(idx)
-            entry.data.to_csv(f"./data/{idx}.csv")
-        print(f"got entry for {idx}")
+            data_entry = entry.data.rename(entry.header, axis="columns")
+            data_entry.to_csv(f"./data/{idx}.csv")
+        else:
+            data_entry = pd.read_csv(f"./data/{idx}.csv")
+
+        data_sets.append(data_entry)
+        ids.append(idx)
+
+
+    data.update(pd.DataFrame({"id": ids,
+                              "raw_data": data_sets}))
 
     print('finished\a')
     return 0
