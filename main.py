@@ -39,6 +39,7 @@ def get_data():
         data_points = {"id":[],
                        "Temperature": [],
                        "Viscosity": [],
+                       "Pressure": [],
                        "Error of viscosity": []}
 
         print("getting datasets:")
@@ -76,10 +77,11 @@ def get_ion_descriptors(ion_codes) -> pd.DataFrame:
 
     if not os.path.exists(f"{DATA_DIR}/d_ions.csv"):
         print("generating ion descriptors:")
-        d_list = list()
+        d_dict = {x: [] for x in (descriptor_list + ["smiles"]) }
+
         for i, code in enumerate(ion_codes):
             print_status(i, len(ion_codes)-1, code)
-            descriptors = dict()
+            descriptors = None
             try:
                 descriptors = padelpy.from_smiles(code)
             except KeyboardInterrupt as e:
@@ -87,13 +89,40 @@ def get_ion_descriptors(ion_codes) -> pd.DataFrame:
             except:
                 print(f"failed to compute descriptors for {code}")
                 descriptors = None
-            d_list.append((code, descriptors))
-        d_ions = pd.DataFrame({"smiles": d_list[0], "descriptors": d_list[1]})
+            d_dict["smiles"].append(code)
+            for item in descriptor_list:
+                d_dict[item].append(descriptors[item] if not descriptors is None else None)
+        d_ions = pd.DataFrame(d_dict)
         d_ions.to_csv(f"{DATA_DIR}/d_ions.csv")
     else:
         d_ions = pd.read_csv(f"{DATA_DIR}/d_ions.csv")
 
     return d_ions
+
+def prepare_data(data, d_ions, sum_f) -> pd.DataFrame:
+    t_data = {x: [] for x in (["Viscosity"] + descriptor_list)}
+    i = 0
+
+    for record in data.itertuples():
+        ions = record.cmp1_smiles.split('.')
+        if len(ions) > 2: continue
+        t_data["Viscosity"].append(record.Viscosity)
+        ion1, ion2 = ions
+        d_ion1 = d_ions[d_ions['smiles'] == ion1].to_dict("list")
+        d_ion2 = d_ions[d_ions['smiles'] == ion2].to_dict("list")
+        for desc in descriptor_list:
+            desc1 = d_ion1[desc][0]
+            desc2 = d_ion2[desc][0]
+            if desc1 is None or desc2 is None:
+                t_data[desc].append(None)
+            else:
+                t_data[desc].append(sum_f(desc1, desc2))
+
+    for key in t_data.keys():
+        if len(t_data[key]) != 1504:
+            print(key, len(t_data[key]))
+
+    return pd.DataFrame(t_data)
 
 def make_mol_files(ions):
     os.path.exists(f"{DATA_DIR}/mol_files") or os.makedirs(f"{DATA_DIR}/mol_files")
@@ -120,8 +149,7 @@ def make_mol_files(ions):
 def get_ions(data) -> tuple[list[str]]:
     ions = []
     for cmp in data["cmp1_smiles"].iloc:
-        ions.append(cmp.split('.')[0])
-        ions.append(cmp.split('.')[1])
+        ions += cmp.split('.')
     return list(set(ions))
 
 def count_datapoints(data) -> int:
@@ -137,7 +165,11 @@ def main() -> int:
     print(f"Dataset count: {count_datasets(data)}")
     print(f"Datapoint count: {count_datapoints(data)}")
 
+    # TODO: Zająć się unikalnością danych; filtrować ciśnienie
+    data_in_temperature = data[data["Temperature"]==298.15]
+
     d_ions = get_ion_descriptors(get_ions(data))
+    t_data = prepare_data(data_in_temperature, d_ions, lambda x, y: x+y)
 
     make_mol_files(get_ions(data))
 
