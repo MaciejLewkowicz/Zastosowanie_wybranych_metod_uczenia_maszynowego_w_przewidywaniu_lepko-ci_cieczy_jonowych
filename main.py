@@ -39,6 +39,7 @@ def get_data():
         data_points = {"id":[],
                        "Temperature": [],
                        "Viscosity": [],
+                       "Pressure": [],
                        "Error of viscosity": []}
 
         print("getting datasets:")
@@ -100,12 +101,12 @@ def get_ion_descriptors(ion_codes) -> pd.DataFrame:
 
 def prepare_data(data, d_ions, sum_f) -> pd.DataFrame:
     t_data = {x: [] for x in (["Viscosity"] + descriptor_list)}
+    i = 0
 
     for record in data.itertuples():
-        t_data["Viscosity"].append(record.Viscosity)
-        print(record.Index, record.cmp1_smiles, record.Temperature, record.Viscosity)
         ions = record.cmp1_smiles.split('.')
         if len(ions) > 2: continue
+        t_data["Viscosity"].append(record.Viscosity)
         ion1, ion2 = ions
         d_ion1 = d_ions[d_ions['smiles'] == ion1].to_dict("list")
         d_ion2 = d_ions[d_ions['smiles'] == ion2].to_dict("list")
@@ -116,6 +117,10 @@ def prepare_data(data, d_ions, sum_f) -> pd.DataFrame:
                 t_data[desc].append(None)
             else:
                 t_data[desc].append(sum_f(desc1, desc2))
+
+    for key in t_data.keys():
+        if len(t_data[key]) != 1504:
+            print(key, len(t_data[key]))
 
     return pd.DataFrame(t_data)
 
@@ -160,7 +165,7 @@ def main() -> int:
     print(f"Dataset count: {count_datasets(data)}")
     print(f"Datapoint count: {count_datapoints(data)}")
 
-    # TODO: Zająć się unikalnością danych
+    # TODO: Zająć się unikalnością danych; filtrować ciśnienie
     data_in_temperature = data[data["Temperature"]==298.15]
 
     d_ions = get_ion_descriptors(get_ions(data))
