@@ -3,6 +3,7 @@ import ilthermopy as ilt
 import os
 import io
 import padelpy
+import math
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from descriptor_list import descriptor_list
@@ -106,7 +107,7 @@ def prepare_data(data, d_ions, sum_f) -> pd.DataFrame:
     for record in data.itertuples():
         ions = record.cmp1_smiles.split('.')
         if len(ions) > 2: continue
-        t_data["Viscosity"].append(record.Viscosity)
+        t_data["Viscosity"].append(math.log(record.Viscosity))
         ion1, ion2 = ions
         d_ion1 = d_ions[d_ions['smiles'] == ion1].to_dict("list")
         d_ion2 = d_ions[d_ions['smiles'] == ion2].to_dict("list")
@@ -170,6 +171,7 @@ def main() -> int:
 
     d_ions = get_ion_descriptors(get_ions(data))
     t_data = prepare_data(data_in_temperature, d_ions, lambda x, y: x+y)
+    t_data.to_csv("traingin_data.csv")
 
     make_mol_files(get_ions(data))
 

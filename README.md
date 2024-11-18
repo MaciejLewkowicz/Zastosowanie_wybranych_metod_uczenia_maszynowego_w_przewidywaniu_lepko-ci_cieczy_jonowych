@@ -1,16 +1,15 @@
 # Requirements
 
-The program requires python 3 and internet connection.
+The program requires python 3, uv package manager and internet connection.
 
 # Running
 
-Run command:
-- linux
+To download and prepare data run command:
+```sh
+uv run data.py
+```
 
-    ```cmd
-    ./run.py
-    ```
-- windows (untested)
-    ```cmd
-    py ./run.py
-    ```
+To train models:
+```sh
+uv run model.py
+```
