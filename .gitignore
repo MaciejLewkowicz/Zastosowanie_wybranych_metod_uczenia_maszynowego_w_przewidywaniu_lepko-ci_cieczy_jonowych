@@ -9,3 +9,6 @@ data/
 
 # plots
 plots/
+
+# trainging data
+train/

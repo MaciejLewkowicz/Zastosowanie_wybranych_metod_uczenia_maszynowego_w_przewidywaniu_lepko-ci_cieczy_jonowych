@@ -132,7 +132,12 @@ def prepare_data(data, d_ions, sum_f):
     o_data.dropna(thresh=5, inplace=True)
     o_data.dropna(axis=1, inplace=True)
 
-    return (prep.StandardScaler(copy=False).fit_transform(o_data))
+    filter = o_data.describe().transpose().query("(not min==max) and std < 0.5").transpose().columns
+    o_data = o_data[filter.tolist() + ["Viscosity"]]
+
+    o_data = pd.DataFrame(prep.StandardScaler().fit_transform(o_data), columns=o_data.columns)
+
+    return o_data
 
 def make_mol_files(ions):
     os.path.exists(f"{DATA_DIR}/mol_files") or os.makedirs(f"{DATA_DIR}/mol_files")

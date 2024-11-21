@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import data
 
-PLOT_DIR = ./plots
+PLOT_DIR = "./plots"
 os.path.exists(PLOT_DIR) or os.makedirs(PLOT_DIR)
 
 t_data = data.get_data()
