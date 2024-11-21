@@ -8,11 +8,12 @@ TRAIN_DIR = "./train"
 os.path.exists(TRAIN_DIR) or os.makedirs(TRAIN_DIR)
 
 t_data = pd.read_csv("training_data.csv")
-ranking = t_data.loc[:, t_data.columns[t_data.columns != "Viscosity"]].describe().transpose().sort_values("std").index.to_numpy()[:400]
+print(t_data.shape)
+ranking = t_data.loc[:, t_data.columns[t_data.columns != "Viscosity"]].describe().transpose().sort_values("std").index.to_numpy()[:500]
 
 rsqs = np.zeros(ranking.shape)
 
-# Wybór modelu
+# Wybór parametrów
 for n in range(len(ranking)):
     y = t_data["Viscosity"].to_numpy()
     X = t_data.loc[:, ranking[:(n+1)]].to_numpy()
@@ -31,4 +32,7 @@ for n in range(len(ranking)):
 
     rsqs[n] = scores.mean()
 
-rsqs.save(f"{TRAIN_DIR}/parameter_selection.npy")
+print(rsqs.shape)
+np.save(f"{TRAIN_DIR}/parameter_selection.npy", rsqs)
+
+print("finished!\a")

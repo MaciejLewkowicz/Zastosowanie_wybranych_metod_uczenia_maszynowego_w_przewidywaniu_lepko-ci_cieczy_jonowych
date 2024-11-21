@@ -132,10 +132,10 @@ def prepare_data(data, d_ions, sum_f):
     o_data.dropna(thresh=5, inplace=True)
     o_data.dropna(axis=1, inplace=True)
 
-    filter = o_data.describe().transpose().query("(not min==max) and std < 0.5").transpose().columns
-    o_data = o_data[filter.tolist() + ["Viscosity"]]
-
     o_data = pd.DataFrame(prep.StandardScaler().fit_transform(o_data), columns=o_data.columns)
+
+    filter = o_data.describe().transpose().query("(not min==max) and std > 0.3 and min >= -3 and max <= 3").transpose().columns
+    o_data = o_data[filter.tolist() + ["Viscosity"]]
 
     return o_data
 
