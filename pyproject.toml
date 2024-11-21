@@ -12,7 +12,14 @@ dependencies = [
     "pandas>=2",
     "pycaret==3.3.2",
     "rdkit>=2024.3.6",
+    "scikit-learn>=1.4.2",
 ]
 
 [tool.pylyzer]
 path = "./.venv/bin/python"
+
+[dependency-groups]
+dev = [
+    "ipython[qtconsole]>=8.29.0",
+    "qtpy>=2.4.2",
+]

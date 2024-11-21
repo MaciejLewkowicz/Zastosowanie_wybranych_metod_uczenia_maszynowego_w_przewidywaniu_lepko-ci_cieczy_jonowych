@@ -7,6 +7,7 @@ import math
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from descriptor_list import descriptor_list
+import sklearn.preprocessing as prep
 
 DATA_DIR = "./data"
 
@@ -60,6 +61,11 @@ def get_data():
             if not "Viscosity" in data_set.columns.values:
                 continue
 
+            if not "Pressure" in data_set.columns.values:
+                data_points["Pressure"] += [None for _ in range(data_set.shape[0])]
+            else:
+                data_points["Pressure"] += data_set["Pressure"].values.tolist()
+
             data_points["Temperature"] += data_set["Temperature"].values.tolist()
             data_points["Viscosity"] += data_set["Viscosity"].values.tolist()
             data_points["Error of viscosity"] += data_set["Error of viscosity"].values.tolist()
@@ -69,6 +75,7 @@ def get_data():
 
         data.to_csv(f"{DATA_DIR}/data.csv")
     else:
+        print("Dataset read from file")
         data = pd.read_csv(f"{DATA_DIR}/data.csv")
 
     return data
@@ -96,11 +103,13 @@ def get_ion_descriptors(ion_codes) -> pd.DataFrame:
         d_ions = pd.DataFrame(d_dict)
         d_ions.to_csv(f"{DATA_DIR}/d_ions.csv")
     else:
+        print("Ion descriptors read from file")
         d_ions = pd.read_csv(f"{DATA_DIR}/d_ions.csv")
 
     return d_ions
 
-def prepare_data(data, d_ions, sum_f) -> pd.DataFrame:
+def prepare_data(data, d_ions, sum_f):
+    print("preparing training data")
     t_data = {x: [] for x in (["Viscosity"] + descriptor_list)}
     i = 0
 
@@ -119,11 +128,11 @@ def prepare_data(data, d_ions, sum_f) -> pd.DataFrame:
             else:
                 t_data[desc].append(sum_f(desc1, desc2))
 
-    for key in t_data.keys():
-        if len(t_data[key]) != 1504:
-            print(key, len(t_data[key]))
+    o_data = pd.DataFrame(t_data)
+    o_data.dropna(thresh=5, inplace=True)
+    o_data.dropna(axis=1, inplace=True)
 
-    return pd.DataFrame(t_data)
+    return (prep.StandardScaler(copy=False).fit_transform(o_data))
 
 def make_mol_files(ions):
     os.path.exists(f"{DATA_DIR}/mol_files") or os.makedirs(f"{DATA_DIR}/mol_files")
@@ -166,14 +175,13 @@ def main() -> int:
     print(f"Dataset count: {count_datasets(data)}")
     print(f"Datapoint count: {count_datapoints(data)}")
 
-    # TODO: Zająć się unikalnością danych; filtrować ciśnienie
-    data_in_temperature = data[data["Temperature"]==298.15]
+    data_in_temperature = data.query("Temperature==298.15 & Pressure == 101.325")
 
     d_ions = get_ion_descriptors(get_ions(data))
     t_data = prepare_data(data_in_temperature, d_ions, lambda x, y: x+y)
-    t_data.to_csv("traingin_data.csv")
+    t_data.to_csv("training_data.csv")
 
-    make_mol_files(get_ions(data))
+    # make_mol_files(get_ions(data))
 
     print('finished\a')
     return 0
