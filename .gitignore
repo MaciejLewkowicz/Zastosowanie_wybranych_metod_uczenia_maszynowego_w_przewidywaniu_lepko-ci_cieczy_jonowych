@@ -6,3 +6,6 @@ __pycache__/
 # cached data
 **/*.csv
 data/
+
+# plots
+plots/
