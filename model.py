@@ -2,7 +2,9 @@ import os
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import KFold
+from sklearn.feature_selection import r_regression, SequentialFeatureSelector
 from sklearn import svm
+import math
 
 TRAIN_DIR = "./train"
 os.path.exists(TRAIN_DIR) or os.makedirs(TRAIN_DIR)
@@ -10,6 +12,21 @@ os.path.exists(TRAIN_DIR) or os.makedirs(TRAIN_DIR)
 t_data = pd.read_csv("training_data.csv")
 print(t_data.shape)
 ranking = t_data.loc[:, t_data.columns[t_data.columns != "Viscosity"]].describe().transpose().sort_values("std").index.to_numpy()[:500]
+correlation = t_data.loc[:, t_data.columns[t_data.columns != "Viscosity"]].corr() > 0.5
+
+print("correlation:", correlation.shape)
+features_to_drop = []
+
+for i, j in [(i, j) for i in range(0, correlation.shape[0]) for j in range(0, i)]:
+        if correlation.iloc[i, j]:
+            rsqa, rsqb = r_regression(t_data.iloc[:, [i, j]], t_data["Viscosity"])
+            if abs(rsqa) > abs(rsqb): features_to_drop.append(i)
+            else: features_to_drop.append(j)
+
+t_data = t_data.loc[:, [not i in features_to_drop for i in range(0, t_data.shape[1])]]
+
+print(t_data.shape)
+exit(0)
 
 rsqs = np.zeros(ranking.shape)
 
