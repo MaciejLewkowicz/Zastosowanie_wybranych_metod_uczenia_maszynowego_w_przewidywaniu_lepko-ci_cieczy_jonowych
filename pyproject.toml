@@ -15,8 +15,10 @@ dependencies = [
     "scikit-learn>=1.4.2",
 ]
 
-[tool.pylyzer]
-path = "./.venv/bin/python"
+[tool.pyright]
+venv = ".venv"
+venvPath = "."
+reportUnusedExpression = false
 
 [dependency-groups]
 dev = [
